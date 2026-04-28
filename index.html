@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota Muara Celluler</title>
+    <style>
+        body { font-family: 'Courier New', Courier, monospace; width: 48mm; margin: 0; padding: 5px; font-size: 12px; }
+        .header { text-align: center; border-bottom: 1px dashed #000; margin-bottom: 10px; padding-bottom: 5px; }
+        .item-table { width: 100%; border-collapse: collapse; }
+        .item-table td { padding: 2px 0; vertical-align: top; }
+        .total { border-top: 1px dashed #000; margin-top: 10px; padding-top: 5px; font-weight: bold; text-align: right; }
+        .footer { margin-top: 15px; text-align: center; font-size: 10px; }
+        .btn-cetak { background: #28a745; color: white; padding: 10px; text-align: center; display: block; margin-bottom: 20px; border-radius: 5px; font-weight: bold; width: 100%; border: none; cursor: pointer; }
+        @media print { .btn-cetak { display: none; } }
+    </style>
+</head>
+<body>
+    <button class="btn-cetak" onclick="window.print()">PENCET CETAK NOTA</button>
+    <div class="header">
+        <h2 style="margin:0">MUARA CELLULER</h2>
+        <small>Servis HP & Sparepart<br>Jombang, Jawa Timur</small>
+    </div>
+    <div>
+        <b>No:</b> <span id="no"></span><br>
+        <b>Tgl:</b> <span id="tgl"></span><br>
+        <b>Nama:</b> <span id="nama"></span><hr>
+    </div>
+    <table class="item-table">
+        <tr><td>Unit:</td><td id="unit" style="text-align:right"></td></tr>
+        <tr><td>IMEI:</td><td id="imei" style="text-align:right"></td></tr>
+        <tr><td>Pola/Sandi:</td><td id="pattern" style="text-align:right"></td></tr>
+        <tr><td>Keluhan:</td><td id="keluhan" style="text-align:right"></td></tr>
+    </table>
+    <div class="total">TOTAL: Rp. <span id="total"></span></div>
+    <div class="footer">
+        <p>Catatan: <br><span id="catatan"></span></p>
+        <p><b>SYARAT & GARANSI:</b><br><span id="garansi"></span></p>
+        <p>*** Terima Kasih ***<br><span id="ucapan"></span></p>
+    </div>
+    <script>
+        const p = new URLSearchParams(window.location.search);
+        document.getElementById('no').innerText = p.get('no') || '-';
+        document.getElementById('nama').innerText = p.get('nama') || '-';
+        document.getElementById('unit').innerText = p.get('unit') || '-';
+        document.getElementById('tgl').innerText = p.get('tgl') || '-';
+        document.getElementById('keluhan').innerText = p.get('keluhan') || '-';
+        document.getElementById('catatan').innerText = p.get('catatan') || '-';
+        document.getElementById('pattern').innerText = p.get('pattern') || '-';
+        document.getElementById('total').innerText = p.get('total') || '0';
+        document.getElementById('garansi').innerText = p.get('garansi') || 'Sesuai ketentuan';
+        document.getElementById('imei').innerText = p.get('imei') || '-';
+        document.getElementById('ucapan').innerText = p.get('ucapan') || 'Semoga HP-nya awet!';
+    </script>
+</body>
+</html>
