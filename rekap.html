@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rekap Kasir Muara</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; min-height: 100vh; }
+
+  .header {
+    background: #1a73e8; color: white;
+    padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header h1 { font-size: 16px; font-weight: 600; flex: 1; }
+  .header .periode { font-size: 11px; opacity: 0.85; }
+
+  .tabs {
+    display: flex; background: white;
+    border-bottom: 1px solid #e0e0e0;
+    position: sticky; top: 48px; z-index: 9;
+  }
+  .tab {
+    flex: 1; text-align: center; padding: 12px 4px;
+    font-size: 13px; color: #666; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+  .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; font-weight: 600; }
+
+  .content { padding: 12px; }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+  .card {
+    background: white; border-radius: 12px;
+    padding: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card.clickable { cursor: pointer; active: scale(0.98); }
+  .card.clickable:active { transform: scale(0.97); }
+  .card-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .card-value { font-size: 20px; font-weight: 700; }
+  .card-value.green { color: #1e7e34; }
+  .card-value.red { color: #c0392b; }
+  .card-value.blue { color: #1a73e8; }
+  .card-tap { font-size: 10px; color: #1a73e8; margin-top: 6px; }
+
+  .laba-card {
+    background: white; border-radius: 12px;
+    padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+  .laba-label { font-size: 12px; color: #888; margin-bottom: 2px; }
+  .laba-value { font-size: 22px; font-weight: 700; color: #1e7e34; }
+  .laba-icon { font-size: 32px; }
+
+  .loading { text-align: center; padding: 40px; color: #888; font-size: 14px; }
+
+  .detail-screen { display: none; }
+  .detail-screen.active { display: block; }
+  .main-screen { display: block; }
+  .main-screen.hidden { display: none; }
+
+  .back-btn {
+    display: flex; align-items: center; gap: 6px;
+    color: #1a73e8; font-size: 13px; cursor: pointer;
+    padding: 10px 0; margin-bottom: 4px;
+  }
+
+  .detail-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px; }
+
+  .item-list { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+  .item-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; border-bottom: 1px solid #f0f0f0;
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-name { font-size: 13px; font-weight: 500; color: #333; }
+  .item-sub { font-size: 11px; color: #888; margin-top: 2px; }
+  .item-val { font-size: 13px; font-weight: 600; color: #333; white-space: nowrap; margin-left: 8px; }
+
+  .total-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 14px; background: #f8f9fa; border-top: 1px solid #e0e0e0;
+    font-weight: 600; font-size: 13px;
+  }
+
+  .empty { text-align: center; padding: 30px; color: #aaa; font-size: 13px; }
+
+  .error-msg { background: #fdecea; color: #c0392b; border-radius: 8px; padding: 12px; font-size: 12px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📊 Rekap Kasir Muara</h1>
+    <div class="periode" id="periodeLabel">Memuat...</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('harian', this)">Harian</div>
+  <div class="tab" onclick="switchTab('mingguan', this)">Mingguan</div>
+  <div class="tab" onclick="switchTab('bulanan', this)">Bulanan</div>
+</div>
+
+<div class="content">
+
+  <div class="main-screen" id="mainScreen">
+    <div id="loadingMain" class="loading">⏳ Memuat data...</div>
+    <div id="mainContent" style="display:none">
+      <div class="summary-grid">
+        <div class="card clickable" onclick="showDetail('pendapatan')">
+          <div class="card-label">💰 Pendapatan</div>
+          <div class="card-value green" id="valPendapatan">-</div>
+          <div class="card-tap">▶ lihat nota</div>
+        </div>
+        <div class="card clickable" onclick="showDetail('pengeluaran')">
+          <div class="card-label">🛒 Pengeluaran</div>
+          <div class="card-value red" id="valPengeluaran">-</div>
+          <div class="card-tap">▶ lihat belanja</div>
+        </div>
+      </div>
+      <div class="laba-card">
+        <div>
+          <div class="laba-label">Laba Bersih</div>
+          <div class="laba-value" id="valLaba">-</div>
+        </div>
+        <div class="laba-icon">📈</div>
+      </div>
+    </div>
+    <div id="errorMain" class="error-msg" style="display:none"></div>
+  </div>
+
+  <div class="detail-screen" id="detailPendapatan">
+    <div class="back-btn" onclick="showMain()">◀ Kembali</div>
+    <div class="detail-title">📋 Detail Nota Diambil</div>
+    <div class="item-list" id="listNota"></div>
+  </div>
+
+  <div class="detail-screen" id="detailPengeluaran">
+    <div class="back-btn" onclick="showMain()">◀ Kembali</div>
+    <div class="detail-title">🛒 Detail Belanja Sparepart</div>
+    <div class="item-list" id="listBelanja"></div>
+  </div>
+
+</div>
+
+<script>
+  var API_URL = "https://script.google.com/macros/s/AKfycbzD7w-2jmXrZkNCMW9l5cdFf3bv8db_0fU7qr9_FfdHYGZOEm67oD7pZDta8yLQg_TJ2A/exec";
+  var currentMode = "harian";
+  var currentData = null;
+
+  function formatRupiah(val) {
+    return "Rp " + Number(val).toLocaleString("id-ID");
+  }
+
+  function switchTab(mode, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentMode = mode;
+    showMain();
+    loadData(mode);
+  }
+
+  function loadData(mode) {
+    document.getElementById('loadingMain').style.display = 'block';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('errorMain').style.display = 'none';
+
+    fetch(API_URL + "?mode=" + mode)
+      .then(r => r.json())
+      .then(data => {
+        currentData = data;
+        renderMain(data);
+      })
+      .catch(err => {
+        document.getElementById('loadingMain').style.display = 'none';
+        document.getElementById('errorMain').style.display = 'block';
+        document.getElementById('errorMain').textContent = "Gagal memuat data. Cek koneksi internet.";
+      });
+  }
+
+  function renderMain(data) {
+    document.getElementById('loadingMain').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+
+    var periodeText = data.label;
+    if (data.startDate === data.endDate) {
+      periodeText += " · " + data.startDate;
+    } else {
+      periodeText += " · " + data.startDate + " – " + data.endDate;
+    }
+    document.getElementById('periodeLabel').textContent = periodeText;
+    document.getElementById('valPendapatan').textContent = formatRupiah(data.totalPendapatan);
+    document.getElementById('valPengeluaran').textContent = formatRupiah(data.totalPengeluaran);
+    document.getElementById('valLaba').textContent = formatRupiah(data.labaBersih);
+  }
+
+  function showDetail(type) {
+    document.getElementById('mainScreen').classList.add('hidden');
+    if (type === 'pendapatan') {
+      document.getElementById('detailPendapatan').classList.add('active');
+      renderNota(currentData.notaList);
+    } else {
+      document.getElementById('detailPengeluaran').classList.add('active');
+      renderBelanja(currentData.belanjaList);
+    }
+  }
+
+  function showMain() {
+    document.querySelectorAll('.detail-screen').forEach(d => d.classList.remove('active'));
+    document.getElementById('mainScreen').classList.remove('hidden');
+  }
+
+  function renderNota(list) {
+    var el = document.getElementById('listNota');
+    if (!list || list.length === 0) {
+      el.innerHTML = '<div class="empty">Belum ada nota diambil periode ini</div>';
+      return;
+    }
+    var html = '';
+    var total = 0;
+    list.forEach(function(n) {
+      total += n.total;
+      html += '<div class="item-row">' +
+        '<div>' +
+          '<div class="item-name">' + n.noNota + ' · ' + n.konsumen + '</div>' +
+          '<div class="item-sub">' + n.merek + ' · ' + n.catatan + '</div>' +
+          '<div class="item-sub">Diambil: ' + n.tglDiambil + '</div>' +
+        '</div>' +
+        '<div class="item-val">' + formatRupiah(n.total) + '</div>' +
+      '</div>';
+    });
+    html += '<div class="total-row"><span>Total</span><span>' + formatRupiah(total) + '</span></div>';
+    el.innerHTML = html;
+  }
+
+  function renderBelanja(list) {
+    var el = document.getElementById('listBelanja');
+    if (!list || list.length === 0) {
+      el.innerHTML = '<div class="empty">Belum ada belanja periode ini</div>';
+      return;
+    }
+    var html = '';
+    var total = 0;
+    list.forEach(function(b) {
+      total += b.total;
+      html += '<div class="item-row">' +
+        '<div>' +
+          '<div class="item-name">' + b.idBelanja + ' · ' + (b.toko || '-') + '</div>' +
+          '<div class="item-sub">No. Nota Toko: ' + (b.noNotaToko || '-') + '</div>' +
+          '<div class="item-sub">' + b.tanggal + '</div>' +
+        '</div>' +
+        '<div class="item-val">' + formatRupiah(b.total) + '</div>' +
+      '</div>';
+    });
+    html += '<div class="total-row"><span>Total</span><span>' + formatRupiah(total) + '</span></div>';
+    el.innerHTML = html;
+  }
+
+  loadData('harian');
+</script>
+</body>
+</html>
